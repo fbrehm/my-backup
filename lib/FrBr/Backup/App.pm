@@ -22,7 +22,7 @@ use Moose::Util::TypeConstraints;
 
 use utf8;
 
-with 'FrBr::Common::MooseX::CommonOpts';
+with 'FrBr::Common::MooseX::App';
 
 #-----------------------------------------
 
@@ -33,7 +33,7 @@ my $Revis = <<'ENDE';
 ENDE
 $Revis =~ s/^.*:\s*(\S+)\s*\$.*/$1/s;
 
-use version; our $VERSION = qv("0.0.2"); $VERSION .= " r" . $Revis;
+use version; our $VERSION = qv("0.0.3"); $VERSION .= " r" . $Revis;
 
 #############################################################################################
 
