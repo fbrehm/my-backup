@@ -22,7 +22,7 @@ use Moose::Util::TypeConstraints;
 
 use utf8;
 
-with 'FrBr::Common::MooseX::App';
+with 'FrBr::Common::MooseX::FtpClient';
 
 #-----------------------------------------
 
