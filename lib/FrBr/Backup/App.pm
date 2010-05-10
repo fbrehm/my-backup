@@ -17,12 +17,14 @@ Basismodul fuer Backup-Anwendung mittels FTP
 
 use Moose;
 use MooseX::StrictConstructor;
-use Moose::Util::TypeConstraints;
-
 
 use utf8;
 
-with 'FrBr::Common::MooseX::FtpClient';
+
+extends 'FrBr::Common::MooseX::App';
+
+with 'FrBr::Common::MooseX::Role::Config';
+with 'FrBr::Common::MooseX::Role::FtpClient';
 
 #-----------------------------------------
 
@@ -33,7 +35,7 @@ my $Revis = <<'ENDE';
 ENDE
 $Revis =~ s/^.*:\s*(\S+)\s*\$.*/$1/s;
 
-use version; our $VERSION = qv("0.0.3"); $VERSION .= " r" . $Revis;
+use version; our $VERSION = qv("0.0.4"); $VERSION .= " r" . $Revis;
 
 #############################################################################################
 
