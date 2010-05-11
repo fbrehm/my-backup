@@ -25,3 +25,5 @@ ftp:
 #   timeout: 120
 #   passive: ~
 #   hash_size: 10240
+#   local_dir: '/var/backup'
+#   remote_dir: '/backup'

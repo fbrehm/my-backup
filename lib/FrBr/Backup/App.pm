@@ -20,6 +20,8 @@ use MooseX::StrictConstructor;
 
 use utf8;
 
+use MooseX::Types::Path::Class;
+use Path::Class;
 
 extends 'FrBr::Common::MooseX::App';
 
@@ -68,6 +70,14 @@ sub _build_ftp_host {
 
 sub _build_ftp_user {
     return 'backup-user';
+}
+
+sub _build_ftp_local_dir {
+    return dir->new( '/var/backup' );
+}
+
+sub _build_ftp_remote_dir {
+    return dir->new( '/backup' );
 }
 
 ###########################################################################
