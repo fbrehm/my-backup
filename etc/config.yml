@@ -1,0 +1,27 @@
+#
+# Zentrale Konfiguration des Backup-Tools
+#
+# partielle lokale Änderungen können in einer 'config_local.yml' vorgenommen werden
+#
+# $Id: config.yml 512 2010-05-05 08:00:18Z fbrehm $
+# $URL: http://svn.technik.berlin.strato.de/svn-os/trunk/sd-mailversand/etc/config.yml $
+#
+---
+# Produktionsstatus: Darf nur 'prod', 'test' oder 'dev' annehmen.
+#production_state: prod
+#
+# Logangaben unabhängig von Log::Log4perl
+#log:
+#  dir: /var/log/ftp-backup
+#  stderror: error.log
+#  stdout: out.log
+#
+ftp:
+   host: 'backup.serverkompetenz.de'
+   user: 'b047934'
+#   password: ~
+#   blocksize: 10240
+#   port: 21
+#   timeout: 120
+#   passive: ~
+#   hash_size: 10240

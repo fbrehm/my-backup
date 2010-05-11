@@ -54,6 +54,22 @@ sub _build_version {
     return $VERSION;
 }
 
+sub _build_ftp_auto_login {
+    return 0;
+}
+
+sub _build_ftp_auto_init {
+    return 0;
+}
+
+sub _build_ftp_host {
+    return 'backup.serverkompetenz.de';
+}
+
+sub _build_ftp_user {
+    return 'backup-user';
+}
+
 ###########################################################################
 
 =head1 METHODS
