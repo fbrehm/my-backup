@@ -131,6 +131,33 @@ sub BUILD {
 
 }
 
+#---------------------------------
+
+=head2 run( )
+
+Die eigentliche Startroutine der Anwendung.
+
+=cut
+
+sub run {
+
+    my $self = shift;
+
+    $self->info( "Verbinde mich FTP-Server ..." );
+
+    unless ( $self->init_ftp() ) {
+        $self->exit_code( 5 );
+        return;
+    }
+
+    unless ( $self->login_ftp() ) {
+        $self->exit_code( 6 );
+        return;
+    }
+
+    $self->info( "Beginne Backup." );
+
+}
 
 ###################################################################################
 

@@ -17,17 +17,19 @@ use lib "$FindBin::Bin/../lib";
 #use FrBr::Backup::App;
 require FrBr::Backup::App;
 
-use version; our $VERSION = qv("0.0.1");
+use version; our $VERSION = qv("0.0.2");
 
 my $opts = {
-#    'progname' => 'backup-per-ftp',
+    'progname' => 'backup-per-ftp',
     'ftp_auto_login' => 0,
 };
 
 my $app = FrBr::Backup::App->new_with_options(%$opts);
 
-#exit($app->exit_code);
-exit 0;
+$app->run();
+
+exit($app->exit_code);
+#exit 0;
 
 
 #--------------------------------------------------------------------------------
