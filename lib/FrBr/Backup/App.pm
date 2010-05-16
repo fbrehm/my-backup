@@ -157,6 +157,12 @@ sub run {
 
     $self->info( "Beginne Backup." );
 
+    # Erst mal nur zum Spielen ...
+    #$self->ftp->cwd;
+    my $list = [];
+    $list = $self->dir_list;
+    $self->debug( "Ergebnis des Directory-Listings: ", $list );
+
 }
 
 ###################################################################################
