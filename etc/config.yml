@@ -27,3 +27,4 @@ ftp:
 #   hash_size: 10240
 #   local_dir: '/var/backup'
 #   remote_dir: '/backup'
+#   remote_timezone: 'UTC'

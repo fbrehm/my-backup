@@ -160,7 +160,7 @@ sub run {
     # Erst mal nur zum Spielen ...
     #$self->ftp->cwd;
     my $list = [];
-    $list = $self->dir_list;
+    $list = $self->dir_list('zzz_issue.txt');
     $self->debug( "Ergebnis des Directory-Listings: ", $list );
 
 }
