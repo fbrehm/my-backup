@@ -27,6 +27,7 @@ extends 'FrBr::Common::MooseX::App';
 
 with 'FrBr::Common::MooseX::Role::Config';
 with 'FrBr::Common::MooseX::Role::FtpClient';
+with 'MooseX::Daemonize::WithPidFile';
 
 #-----------------------------------------
 
@@ -45,8 +46,43 @@ use version; our $VERSION = qv("0.0.4"); $VERSION .= " r" . $Revis;
 
 =cut
 
-#-----------------------------------------
+has pidbase => (
+    is              => 'rw',
+    isa             => 'Path::Class::Dir',
+    metaclass       => 'Getopt',
+    lazy            => 1,
+    required        => 1,
+    coerce          => 1,
+    default         => sub { Path::Class::Dir->new('', 'var', 'run') },
+    documentation   => 'Verzeichnis, in dem die PID-Datei abgelegt wird.',
+    cmd_flag        => 'pidbase',
+);
 
+#---------------------------------------------------------------------------
+
+=head2 backup_copies_yearly
+
+Wieviele jährliche Backup-Kopien sollen aufbewahrt werden?
+
+=cut
+
+has 'backup_copies_yearly' => (
+    is              => 'rw',
+    isa             => 'UnsignedInt',
+    traits          => [ 'Getopt' ],
+    lazy            => 1,
+    required        => 1,
+    builder         => '_build_backup_copies_yearly',
+    documentation   => 'Int: Wieviele jährliche Backup-Kopien sollen aufbewahrt werden? (default: 2).',
+    cmd_flag        => 'backup-copies-yearly',
+    cmd_aliases     => [ 'copies-yearly' ],
+);
+
+#--------------------
+
+sub _build_backup_copies_yearly {
+    return 2;
+}
 
 #-----------------------------------------
 
@@ -107,6 +143,25 @@ around BUILDARGS => sub {
 
 #---------------------------------
 
+## PID file related stuff ...
+
+sub init_pidfile {
+    my $self = shift;
+    my $file = file->new( $self->pidbase, $self->progname . '.pid' );
+    my $fname = $file->stringify;
+    confess "Cannot write to $fname" unless (-e $fname ? -w $fname : -w $self->pidbase);
+    $self->debug( sprintf( "PID-File: '%s'", $fname ) );
+    MooseX::Daemonize::Pid::File->new( file => $fname );
+}
+
+# backwards compat,
+sub check      { (shift)->pidfile->is_running }
+sub save_pid   { (shift)->pidfile->write      }
+sub remove_pid { (shift)->pidfile->remove     }
+sub get_pid    { (shift)->pidfile->pid        }
+
+#---------------------------------
+
 sub BUILD {
 
     my $self = shift;
@@ -131,6 +186,95 @@ sub BUILD {
 
 }
 
+#---------------------------------------------------------------------------
+
+after 'evaluate_config' => sub {
+
+    my $self = shift;
+
+    #return if $self->configuration_evaluated;
+    $self->debug( "Werte Backup-Konfigurationsdinge aus ..." );
+    return unless $self->config and keys %{ $self->config };
+
+    my @ConfigKeys = qw( copies_yearly );
+
+    for my $key ( keys %{ $self->config } ) {
+
+        my $val = $self->config->{$key};
+
+        for my $p ( @ConfigKeys ) {
+            my $f = 'backup_' . $p;
+            my $r = $p;
+            $r =~ s/_/\[_-\]\?/g;
+            $r = "^backup[_\-]?$r\$";
+            $self->debug( sprintf( "Regex 1: '%s'", $r ) ) if $self->verbose >= 4;
+            unless ( $self->used_cmd_params->{$f} ) {
+                if ( $key =~ /$r/i ) {
+                    $self->debug( sprintf( "Gefunden: \$self->config->{%s} -> '%s'", $key, ( defined $val ? $val : '<undef>' ) ) ) if $self->verbose >= 2;
+                    $self->$f($val);
+                }
+            }
+        }
+
+        if ( $key =~ /^pidbase$/i and $val ) {
+            unless ( $self->used_cmd_params->{'pidbase'} ) {
+                $self->debug( sprintf( "Gefunden: \$self->config->{%s} -> '%s'", $key, $val ) ) if $self->verbose >= 2;
+                $self->pidbase($val);
+            }
+        }
+
+    }
+
+    for my $key ( keys %{ $self->config } ) {
+        if ( lc($key) eq 'backup' and ref( $self->config->{$key} ) and ref( $self->config->{$key} ) eq 'HASH' ) {
+            for my $ftp_key ( keys %{ $self->config->{$key} } ) {
+
+                my $val = $self->config->{$key}{$ftp_key};
+
+                for my $p ( @ConfigKeys ) {
+
+                    my $f = 'backup_' . $p;
+                    my $r = $p;
+                    $r =~ s/_/\[_-\]\?/g;
+                    $r = "^$r\$";
+                    $self->debug( sprintf( "Regex 2: '%s'", $r ) ) if $self->verbose >= 4;
+
+                    unless ( $self->used_cmd_params->{$f} ) {
+                        if ( $ftp_key =~ /$r/i ) {
+                            $self->debug( sprintf( "Gefunden: \$self->config->{%s}{%s} -> '%s'", $key, $ftp_key, ( defined $val ? $val : '<undef>' ) ) ) if $self->verbose >= 2;
+                            $self->$f($val);
+                        }
+                    }
+
+                }
+
+            }
+        }
+    }
+
+};
+
+#---------------------------------------------------------------------------
+
+after 'init_app' => sub {
+
+    my $self = shift;
+
+    return if $self->app_initialized;
+
+    $self->debug( "Initialisiere ..." );
+
+    if ( $self->verbose >= 2 ) {
+
+        my $tmp;
+        for my $f ( 'pidbase', 'pidfile', 'backup_copies_yearly', ) {
+            $tmp = $self->$f();
+        }
+
+    }
+
+};
+
 #---------------------------------
 
 =head2 run( )
@@ -142,6 +286,19 @@ Die eigentliche Startroutine der Anwendung.
 sub run {
 
     my $self = shift;
+
+    # Gucken, ob es ein PID-File gibt und ob da etwas sinnvolles drin steht
+    if ($self->pidfile->is_running) {
+        $self->exit_code($self->OK);
+        my $msg = sprintf( "%s läuft noch mit PID (%s)", $self->progname, $self->pidfile->pid );
+        $self->info($msg);
+        #$self->status_message($msg);
+        return !($self->exit_code);
+    }
+    # PID-File schreiben
+    $self->debug( sprintf( "Schreibe PID-File '%s' ...", $self->pidfile->file ) );
+    $self->pidfile->pid($$);
+    $self->pidfile->write;
 
     $self->info( "Verbinde mich FTP-Server ..." );
 
@@ -160,8 +317,12 @@ sub run {
     # Erst mal nur zum Spielen ...
     #$self->ftp->cwd;
     my $list = [];
-    $list = $self->dir_list('zzz_issue.txt');
+    $list = $self->dir_list();
     $self->debug( "Ergebnis des Directory-Listings: ", $list );
+
+    # PID-File wieder wegschmeissen
+    $self->debug( sprintf( "Lösche PID-File '%s' ...", $self->pidfile->file ) );
+    $self->pidfile->remove if $self->pidfile->pid == $$;
 
 }
 

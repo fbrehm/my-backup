@@ -16,6 +16,9 @@
 #  stderror: error.log
 #  stdout: out.log
 #
+# Verzeichnis, in dem die Pid-Datei liegt.
+pidbase: /var/run
+#
 ftp:
    host: 'backup.serverkompetenz.de'
    user: 'b047934'
@@ -28,3 +31,14 @@ ftp:
 #   local_dir: '/var/backup'
 #   remote_dir: '/backup'
 #   remote_timezone: 'UTC'
+#
+# Wieviele Backup-Kopien jeder Sorte sollen aufbewahrt werden?
+backup:
+# Jährlich vom 1. Januar
+   copies_yearly: 2
+# Monatlich vom ersten des Monats
+   copies_monthly: 3
+# Wöchentlich von Sonntag morgens
+   copies_weekly: 2
+# Täglich
+   copies_daily: 3
