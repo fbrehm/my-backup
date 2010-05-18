@@ -116,6 +116,12 @@ sub _build_ftp_remote_dir {
     return dir->new( '/backup' );
 }
 
+#------------------------------------------
+
+has '+pidfile' => (
+    documentation   => 'PID-Datei',
+);
+
 ###########################################################################
 
 =head1 METHODS
