@@ -84,6 +84,84 @@ sub _build_backup_copies_yearly {
     return 2;
 }
 
+#---------------------------------------------------------------------------
+
+=head2 backup_copies_monthly
+
+Wieviele monatliche Backup-Kopien sollen aufbewahrt werden?
+
+=cut
+
+has 'backup_copies_monthly' => (
+    is              => 'rw',
+    isa             => 'UnsignedInt',
+    traits          => [ 'Getopt' ],
+    lazy            => 1,
+    required        => 1,
+    builder         => '_build_backup_copies_monthly',
+    documentation   => 'Int: Wieviele monatliche Backup-Kopien sollen aufbewahrt werden? (default: 2).',
+    cmd_flag        => 'backup-copies-monthly',
+    cmd_aliases     => [ 'copies-monthly' ],
+);
+
+#--------------------
+
+sub _build_backup_copies_monthly {
+    return 3;
+}
+
+#---------------------------------------------------------------------------
+
+=head2 backup_copies_weekly
+
+Wieviele wöchentliche Backup-Kopien sollen aufbewahrt werden?
+
+=cut
+
+has 'backup_copies_weekly' => (
+    is              => 'rw',
+    isa             => 'UnsignedInt',
+    traits          => [ 'Getopt' ],
+    lazy            => 1,
+    required        => 1,
+    builder         => '_build_backup_copies_weekly',
+    documentation   => 'Int: Wieviele wöchentliche Backup-Kopien sollen aufbewahrt werden? (default: 2).',
+    cmd_flag        => 'backup-copies-weekly',
+    cmd_aliases     => [ 'copies-weekly' ],
+);
+
+#--------------------
+
+sub _build_backup_copies_weekly {
+    return 2;
+}
+
+#---------------------------------------------------------------------------
+
+=head2 backup_copies_daily
+
+Wieviele tägliche Backup-Kopien sollen aufbewahrt werden?
+
+=cut
+
+has 'backup_copies_daily' => (
+    is              => 'rw',
+    isa             => 'UnsignedInt',
+    traits          => [ 'Getopt' ],
+    lazy            => 1,
+    required        => 1,
+    builder         => '_build_backup_copies_daily',
+    documentation   => 'Int: Wieviele tägliche Backup-Kopien sollen aufbewahrt werden? (default: 2).',
+    cmd_flag        => 'backup-copies-daily',
+    cmd_aliases     => [ 'copies-daily' ],
+);
+
+#--------------------
+
+sub _build_backup_copies_daily {
+    return 3;
+}
+
 #-----------------------------------------
 
 # Ändern der Eigenschaften einiger geerbter Attribute
@@ -202,7 +280,7 @@ after 'evaluate_config' => sub {
     $self->debug( "Werte Backup-Konfigurationsdinge aus ..." );
     return unless $self->config and keys %{ $self->config };
 
-    my @ConfigKeys = qw( copies_yearly );
+    my @ConfigKeys = qw( copies_yearly copies_monthly copies_weekly copies_daily);
 
     for my $key ( keys %{ $self->config } ) {
 
@@ -273,7 +351,7 @@ after 'init_app' => sub {
     if ( $self->verbose >= 2 ) {
 
         my $tmp;
-        for my $f ( 'pidbase', 'pidfile', 'backup_copies_yearly', ) {
+        for my $f ( 'pidbase', 'pidfile', 'backup_copies_yearly', 'backup_copies_monthly', 'backup_copies_weekly', 'backup_copies_daily', ) {
             $tmp = $self->$f();
         }
 
