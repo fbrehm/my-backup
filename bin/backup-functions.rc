@@ -1,0 +1,139 @@
+#!/bin/sh
+
+BACKUP_DIR="${BACKUP_DIR:-/var/backup}"
+VHOSTS_DIR="${VHOSTS_DIR:-/var/www}"
+MY_CNF="${MY_CNF:-/root/.my.cnf.backup}"
+LDAP_DN="${LDAP_DN:-cn=frank,dc=brehm-online,dc=com}"
+LDAP_PW="${LDAP_PW:-up2UdLCE}"
+LDAP_SEARCH_BASE="${LDAP_SEARCH_BASE:-dc=brehm-online,dc=com}"
+
+TAR_MAX_VOLUME_SIZE=${TAR_MAX_VOLUME_SIZE:-660m}
+
+#export LANG=
+#export LC_CTYPE=en_US.UTF-8
+#export LC_NUMERIC=POSIX
+#export LC_TIME=POSIX
+#export LC_COLLATE=POSIX
+#export LC_MONETARY=POSIX
+#export LC_MESSAGES=POSIX
+#export LC_PAPER=POSIX
+##export LC_NAME=POSIX
+#export LC_ADDRESS=POSIX
+#export LC_TELEPHONE=POSIX
+#export LC_MEASUREMENT=POSIX
+#export LC_IDENTIFICATION=POSIX
+
+#######################################################################
+
+do_backup_fs( ) {
+
+    DIR2BACKUP=$1
+    TARNAME=$2
+    TYPE=$3
+    DO_COMPRESS=$4
+
+    EXT=tar
+    TAR_CMD_OPTS="--create --preserve --sparse"
+    SPLIT_CMD_OPTS="--bytes=${TAR_MAX_VOLUME_SIZE}"
+    if [ -n "${DO_COMPRESS}" ] ; then
+        EXT=tbz
+        TAR_CMD_OPTS="${TAR_CMD_OPTS} --bzip2"
+    fi
+    if [ -n "${VERBOSE}" -a "${VERBOSE}" != "0" ] ; then
+        TAR_CMD_OPTS="${TAR_CMD_OPTS} --verbose"
+        SPLIT_CMD_OPTS="${SPLIT_CMD_OPTS} --verbose"
+    fi
+    TAR_CMD_OPTS="${TAR_CMD_OPTS} -f"
+    TARFILE="backup-${TARNAME}.${TYPE}.${EXT}"
+    TARFILE_ABS=${BACKUP_DIR}/${TARFILE}
+
+    OPWD=`pwd`
+
+    echo
+    echo "Sichere ${DIR2BACKUP} ..."
+
+    if echo "${DIR2BACKUP}" | grep "^/" >/dev/null ; then
+        cd /
+        DIR2BACKUP=`echo "${DIR2BACKUP}" | sed 's#^/*##'`
+    fi
+
+    echo "   [`date`]: beginne TAR"
+#    echo "tar ${TAR_CMD_OPTS} - ${DIR2BACKUP} | split ${SPLIT_CMD_OPTS} - ${TARFILE_ABS}"
+    tar ${TAR_CMD_OPTS} - ${DIR2BACKUP} | split ${SPLIT_CMD_OPTS} - ${TARFILE_ABS}.
+    echo "   [`date`]: fertig TAR"
+
+    if [ ! -f ${TARFILE_ABS}.ab -a -f ${TARFILE_ABS}.aa ] ; then
+        echo "   [`date`]: Benenne ${TARFILE_ABS}.aa in ${TARFILE_ABS} um ..."
+        mv "${TARFILE_ABS}.aa" "${TARFILE_ABS}"
+    fi
+
+    cd ${OPWD}
+
+}
+
+#######################################################################
+
+do_backup_mysql( ) {
+
+    TYPE="$1"
+    DUMPFILE="mysql.dump.${TYPE}.bz2"
+    DUMPFILE_ABS="${BACKUP_DIR}"/"${DUMPFILE}"
+
+    V_PARAM=""
+    if [ -n "${VERBOSE}" -a "${VERBOSE}" != "0" ] ; then
+        V_PARAM="--verbose"
+    fi
+
+    echo
+    echo "Sichere MySQL-Datenbank ..."
+    echo "   [`date`]: beginne DUMP"
+
+    mysqldump --defaults-extra-file="$MY_CNF" \
+              --add-locks \
+              --skip-opt \
+              --comments \
+              --create-options \
+              --hex-blob \
+              --routines \
+              --triggers \
+              --lock-tables \
+              --quote-names \
+              --add-drop-table \
+              ${V_PARAM} --all-databases | bzip2 -c >"${DUMPFILE_ABS}"
+
+    echo "   [`date`]: fertig DUMP"
+
+}
+
+#######################################################################
+
+do_backup_ldap( ) {
+
+    TYPE="$1"
+    DUMPFILE=ldap.dump.${TYPE}.gz
+    DUMPFILE_ABS=${BACKUP_DIR}/${DUMPFILE}
+
+    V_PARAM=""
+    if [ -n "${VERBOSE}" -a "${VERBOSE}" != "0" ] ; then
+        V_PARAM="-v"
+    fi
+
+    echo
+    echo "Sichere LDAP-Datenbank ..."
+    echo "   [`date`]: beginne DUMP"
+    ldapsearch -D "${LDAP_DN}" -x ${V_PARAM} -h localhost -z 10000 -w "${LDAP_PW}" -b "${LDAP_SEARCH_BASE}" | gzip -9 >${DUMPFILE_ABS}
+    echo "   [`date`]: fertig DUMP"
+
+}
+
+#######################################################################
+
+remove_all( ) {
+    echo
+    echo "Lösche alle lokalen Backups unter ${BACKUP_DIR} ..."
+    find ${BACKUP_DIR} -type f -exec rm -v {} \;
+}
+
+#######################################################################
+
+# vim: noai : ts=4 fenc=utf-8 filetype=sh : expandtab
