@@ -33,16 +33,16 @@ if [ ! -d "${VHOSTS_DIR}" ] ; then
     exit 7
 fi
 
-#for vdir in "${VHOSTS_DIR}"/* ; do
-#    if [ -d "${vdir}" ] ; then
-#        d=`basename "${vdir}"`
-#        if [ "${d}" == "fotoalbum" ] ; then
-#            do_backup_fs "${vdir}" www."${d}" "${DATUM}"
-#        else
-#            do_backup_fs "${vdir}" www."${d}" "${DATUM}" 1
-#        fi
-#    fi
-#done
+for vdir in "${VHOSTS_DIR}"/* ; do
+    if [ -d "${vdir}" ] ; then
+        d=`basename "${vdir}"`
+        if [ "${d}" == "fotoalbum" ] ; then
+            do_backup_fs "${vdir}" www."${d}" "${DATUM}"
+        else
+            do_backup_fs "${vdir}" www."${d}" "${DATUM}" 1
+        fi
+    fi
+done
 
 do_backup_fs "/etc"                "etc"         "${DATUM}" 1
 do_backup_fs "/var/bind"           "bind"        "${DATUM}" 1
