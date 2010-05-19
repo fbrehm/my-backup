@@ -23,6 +23,7 @@ use utf8;
 use MooseX::Types::Path::Class;
 use Path::Class;
 use DateTime;
+use Math::BigInt;
 
 extends 'FrBr::Common::MooseX::App';
 
@@ -471,6 +472,8 @@ sub run {
     $list = $self->dir_list();
     $self->debug( "Ergebnis des Directory-Listings: ", [ map { $_->{'name'} } @$list ] ) if $self->verbose >= 3;
 
+    my $total_size = Math::BigInt->new(0);
+
     my @Items = sort { lc($a) cmp lc($b) } map { $_->{'name'} } @$list;
     if ( @Items ) {
         my @Sizes = $self->disk_usage( @Items );
@@ -479,16 +482,19 @@ sub run {
         my $len = length($title);
         my $line = '=' x $len;
         printf "\n%s\n%s\n\n", $title, $line;
-        my $max = 1;
+        my $max = length('Gesamt:');
         for my $item ( @Items ) {
             $max = length($item) if length($item) > $max;
         }
         while ( $i < scalar( @Items ) ) {
             my $item = $Items[$i];
             my $size = $Sizes[$i] || 0;
-            printf "%-*s %12s Byte%s\n", ( $max + 1 ), $item, $size, ( $size > 1 ? 's' : '' );
+            $total_size->badd( Math::BigInt->new( $size ) );
+            printf "%-*s %13s Byte%s\n", ( $max + 1 ), $item, $size, ( $size > 1 ? 's' : '' );
             $i++;
         }
+
+        printf "\n%-*s %13s Bytes\n", ( $max + 1 ), 'Gesamt:', $total_size->bstr;
 
         printf "\n%s\n\n", $line;
     }
