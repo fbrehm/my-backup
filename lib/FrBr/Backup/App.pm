@@ -22,6 +22,7 @@ use utf8;
 
 use MooseX::Types::Path::Class;
 use Path::Class;
+use DateTime;
 
 extends 'FrBr::Common::MooseX::App';
 
@@ -398,15 +399,166 @@ sub run {
 
     $self->info( "Beginne Backup." );
 
-    # Erst mal nur zum Spielen ...
-    #$self->ftp->cwd;
+    my $now = DateTime->now;
+    my $dir_template = $now->strftime('%Y-%m-%d_%%02d');
+    my $backup_dir;
+    $self->debug( sprintf( "Backup-Verzeichnis-Template: '%s'", $dir_template ) );
+
     my $list = [];
     $list = $self->dir_list();
-    $self->debug( "Ergebnis des Directory-Listings: ", $list );
+    $self->debug( "Ergebnis des Directory-Listings: ", [ map { $_->{'name'} } @$list ] );
+
+    {
+        my $i = 0;
+        my $found = 1;
+        while ( $found ) {
+            $backup_dir = sprintf( $dir_template, $i );
+            $self->debug( sprintf( "Suche nach neuem Backup-Verzeichnis: %s", $backup_dir ) );
+            $found = undef;
+            for my $dir ( map { $_->{'name'} } @$list ) {
+                $found = 1 if $dir =~ /^\Q$backup_dir\E$/i;
+            }
+            $i++;
+        }
+    }
+    $self->debug( sprintf( "Neues Backup-Verzeichnis gefunden: '%s'", $backup_dir ) );
+
+    my $type_mapping = {
+        'yearly'    => {},
+        'monthly'   => {},
+        'weekly'    => {},
+        'daily'     => {},
+        'other'     => {},
+    };
+
+    $type_mapping->{'yearly'}{ $backup_dir } = 1 if $now->month == 1 and $now->day == 1;    # 1. Januar
+    $type_mapping->{'monthly'}{ $backup_dir } = 1 if $now->day == 1;                        # 1. des Monats
+    $type_mapping->{'weekly'}{ $backup_dir } = 1 if $now->day_of_week == 7;                 # Sonntag
+    $type_mapping->{'daily'}{ $backup_dir } = 1;                                            # Jeder Tag
+
+
+    $self->map_dirs2types( $type_mapping, $list );
+    $self->debug( "Zuordnung der gefundenen Verzeichnisse zu Backup-Typen: ", $type_mapping );
+
+    my $dirs_delete = {};
+
+    for my $type ( 'yearly', 'monthly', 'weekly', 'daily' ) {
+
+        my $f = 'backup_copies_' . $type;
+        my $max = $self->$f();
+        $max = 0 if $max < 0;
+
+        $self->debug( sprintf( "Maximale Zahl an Backup-Sets für '%s': %d", $type, $max ) );
+
+        while ( scalar( keys %{ $type_mapping->{$type} } ) > $max ) {
+            my $key = [ sort { lc($a) cmp lc($b) } keys %{ $type_mapping->{$type} } ]->[0];
+            $self->debug( sprintf( "Lösche Key '%s' in Typ '%s' ...", $key, $type ) );
+            delete $type_mapping->{$type}{$key};
+        }
+
+    }
+    $self->debug( "Verbliebene Zuordnungen zu Backup-Typen: ", $type_mapping );
+
+    for my $dir ( map { $_->{'name'} } @$list ) {
+        my $do_delete = 1;
+        for my $type ( 'yearly', 'monthly', 'weekly', 'daily', 'other' ) {
+            if ( $type_mapping->{$type}{$dir} ) {
+                $do_delete = undef;
+            }
+        }
+        $dirs_delete->{$dir} = 1 if $do_delete;
+    }
+    $self->debug( "Verzeichnisse, die gelöscht werden sollen: ", $dirs_delete );
+
+    $self->remove_recursive( sort { lc($a) cmp lc($b) } keys %$dirs_delete ) if keys %$dirs_delete;
+
+    $self->ftp->mkdir( $backup_dir );
+    if ( $self->ftp->cwd( $backup_dir ) ) {
+        for my $f ( glob( '*' ) ) {
+            next unless -f $f;
+            my $fsize = -s $f;
+            $self->info( sprintf( "Transferiere Datei '%s' (%s Byte%s) ...", $f, $fsize, ( $fsize > 1 ? 's' : '' ) ) );
+            $self->ftp->put( $f );
+        }
+        $self->ftp->cdup;
+    }
+    else {
+        $self->error( sprintf( "Wechsel in das Verzeichnis '%s' hat nicht geklappt: %s", $backup_dir, $self->ftp->message ) );
+    }
+
+#    my $sizes = [];
+#    @$sizes = $self->disk_usage( 'uhu' );
+#    $self->debug( "Größen von irgendwelchen Dingen: ", $sizes );
+    $list = $self->dir_list();
+    $self->debug( "Ergebnis des Directory-Listings: ", [ map { $_->{'name'} } @$list ] ) if $self->verbose >= 3;
+
+    my @Items = sort { lc($a) cmp lc($b) } map { $_->{'name'} } @$list;
+    if ( @Items ) {
+        my @Sizes = $self->disk_usage( @Items );
+        my $i = 0;
+        my $title = sprintf "Verbrauchter Speicherplatz in '%s':", $self->ftp_remote_dir;
+        my $len = length($title);
+        my $line = '=' x $len;
+        printf "\n%s\n%s\n\n", $title, $line;
+        my $max = 1;
+        for my $item ( @Items ) {
+            $max = length($item) if length($item) > $max;
+        }
+        while ( $i < scalar( @Items ) ) {
+            my $item = $Items[$i];
+            my $size = $Sizes[$i] || 0;
+            printf "%-*s %12s Byte%s\n", ( $max + 1 ), $item, $size, ( $size > 1 ? 's' : '' );
+            $i++;
+        }
+
+        printf "\n%s\n\n", $line;
+    }
 
     # PID-File wieder wegschmeissen
     $self->debug( sprintf( "Lösche PID-File '%s' ...", $self->pidfile->file ) );
     $self->pidfile->remove if $self->pidfile->pid == $$;
+
+}
+
+#---------------------------------
+
+sub map_dirs2types {
+
+    my $self = shift;
+    my $type_mapping = shift;
+    my $list = shift;
+
+    for my $entry ( @$list ) {
+
+        # Nur Verzeichnisse gehören zum ordentlichen Backup
+        if ( $entry->{'type'} ne 'd' ) {
+            $type_mapping->{'other'}{ $entry->{'name'} } = 1;
+            next;
+        }
+
+        my ( $year, $month, $day );
+        unless ( ( $year, $month, $day ) = $entry->{'name'} =~ /^\s*(\d+)[_\-](\d+)[_\-](\d+)/ ) {
+            # Passt nicht ins Namensschema
+            $type_mapping->{'other'}{ $entry->{'name'} } = 1;
+            next;
+        }
+
+        my $dt;
+        eval {
+            $dt = DateTime->new( year => $year, month => $month, day => $day, time_zone => $self->local_timezone );
+        };
+        if ( $@ ) {
+            $self->debug( sprintf( "Ungültige Datumsangabe in '%s': %s", $entry->{'name'}, $@ ) );
+            $type_mapping->{'other'}{ $entry->{'name'} } = 1;
+            next;
+        }
+
+        $type_mapping->{'yearly'}{ $entry->{'name'} } = 1 if $dt->month == 1 and $dt->day == 1;     # 1. Januar
+        $type_mapping->{'monthly'}{ $entry->{'name'} } = 1 if $dt->day == 1;                        # 1. des Monats
+        $type_mapping->{'weekly'}{ $entry->{'name'} } = 1 if $dt->day_of_week == 7;                 # Sonntag
+        $type_mapping->{'daily'}{ $entry->{'name'} } = 1;                                           # Jeder Tag
+
+    }
 
 }
 
