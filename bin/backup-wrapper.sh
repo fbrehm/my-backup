@@ -35,12 +35,16 @@ BACKUP_POST_SCRIPT="${BASEDIR}/backup-post.sh"
 FUNC_LIB="${BASEDIR}/backup-functions.rc"
 
 ALL_SCRIPTS_FOUND=1
-for S in ${BACKUP_PRE_SCRIPT} ${BACKUP_SCRIPT} ${BACKUP_POST_SCRIPT} ${FUNC_LIB} ; do
+for S in ${BACKUP_PRE_SCRIPT} ${BACKUP_SCRIPT} ${BACKUP_POST_SCRIPT} ; do
     if [ ! -x ${S} ] ; then
         echo "Script '${S}' fehlt." >&2
         ALL_SCRIPTS_FOUND=0
     fi
 done
+if [ ! -f ${FUNC_LIB} ] ; then
+    echo "Script '${FUNC_LIB}' fehlt." >&2
+    ALL_SCRIPTS_FOUND=0
+fi
 
 if [ "${ALL_SCRIPTS_FOUND}" == "0" ] ; then
     exit 10

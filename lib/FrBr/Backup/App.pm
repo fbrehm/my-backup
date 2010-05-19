@@ -404,7 +404,7 @@ sub run {
             $i++;
         }
     }
-    $self->debug( sprintf( "Neues Backup-Verzeichnis gefunden: '%s'", $backup_dir ) );
+    $self->info( sprintf( "Neues Backup-Verzeichnis: '%s'", $backup_dir ) );
 
     my $type_mapping = {
         'yearly'    => {},
