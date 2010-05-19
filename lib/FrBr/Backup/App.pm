@@ -39,7 +39,7 @@ my $Revis = <<'ENDE';
 ENDE
 $Revis =~ s/^.*:\s*(\S+)\s*\$.*/$1/s;
 
-use version; our $VERSION = qv("0.0.4"); $VERSION .= " r" . $Revis;
+use version; our $VERSION = qv("0.9.1"); $VERSION .= " r" . $Revis;
 
 #############################################################################################
 
@@ -220,8 +220,6 @@ around BUILDARGS => sub {
 
     #warn "Bin in '" . __PACKAGE__ . "'\n";
 
-#    $Args{'show_sql'} = 1 if $Args{'verbose'} and $Args{'verbose'} >= 3;
-
     return $class->$orig(%Args);
 
 };
@@ -252,22 +250,6 @@ sub BUILD {
     my $self = shift;
 
     #warn "Bin in '" . __PACKAGE__ . "::BUILD'\n";
-
-#    $self->_init_log();
-#    $self->read_config_file();
-#    $self->evaluate_config();
-
-    # Darstellen der Objektstruktur
-#    if ( $self->verbose >= 2 ) {
-#        # Aufwecken der faulen Hunde
-#        my $tmp = $self->pidbase;
-#        $tmp = $self->pidfile;
-#        $tmp = $self->progname;
-#        $tmp = $self->basedir;
-#        $self->debug( "Anwendungsobjekt vor der Db-Schema-Initialisierung: ", $self );
-#    }
-
-#    $self->debug( "Bereit zum Kampf - äh - was auch immer." );
 
 }
 
@@ -486,9 +468,6 @@ sub run {
         $self->error( sprintf( "Wechsel in das Verzeichnis '%s' hat nicht geklappt: %s", $backup_dir, $self->ftp->message ) );
     }
 
-#    my $sizes = [];
-#    @$sizes = $self->disk_usage( 'uhu' );
-#    $self->debug( "Größen von irgendwelchen Dingen: ", $sizes );
     $list = $self->dir_list();
     $self->debug( "Ergebnis des Directory-Listings: ", [ map { $_->{'name'} } @$list ] ) if $self->verbose >= 3;
 
