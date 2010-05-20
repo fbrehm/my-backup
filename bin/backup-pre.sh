@@ -19,6 +19,12 @@ fi
 
 DATUM=$( date +'%Y-%m-%d' )
 
+MD5SUMFILE=${BACKUP_DIR}/md5.txt
+SHA1SUMFILE=${BACKUP_DIR}/sha1.txt
+
+TMP_MD5SUMFILE=$( mktemp /tmp/backup.md5.XXXXXXXX.txt )
+TMP_SHA1SUMFILE=$( mktemp /tmp/backup.sha1.XXXXXXXX.txt )
+
 echo
 echo "[`date`]: Beginne Backup."
 echo
@@ -69,6 +75,30 @@ done
 
 do_backup_mysql "${TYPE}"
 do_backup_ldap  "${TYPE}"
+
+echo
+echo "[`date`]: Erstelle Prüfsummen ..."
+echo
+
+(
+    cd "${BACKUP_DIR}"
+    echo "[`date`]: MD5 ..."
+    md5sum * >${TMP_MD5SUMFILE}
+    echo "[`date`]: SHA1 ..."
+    sha1sum * >${TMP_SHA1SUMFILE}
+)
+
+if [ -f ${TMP_MD5SUMFILE} ] ; then
+    mv -v ${TMP_MD5SUMFILE} ${MD5SUMFILE}
+else
+    echo "Datei '${TMP_MD5SUMFILE}' irgendwie nicht erstellt."
+fi
+
+if [ -f ${TMP_SHA1SUMFILE} ] ; then
+    mv -v ${TMP_SHA1SUMFILE} ${SHA1SUMFILE}
+else
+    echo "Datei '${TMP_SHA1SUMFILE}' irgendwie nicht erstellt."
+fi
 
 echo
 echo "Backup-Verzeichnis '${BACKUP_DIR}':"
