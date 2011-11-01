@@ -50,14 +50,37 @@ for vdir in "${VHOSTS_DIR}"/* ; do
     fi
 done
 
-do_backup_fs "/etc"                "etc"         "${DATUM}" 1
-do_backup_fs "/var/bind"           "bind"        "${DATUM}" 1
-do_backup_fs "/var/lib/portage"    "lib-portage" "${DATUM}" 1
-do_backup_fs "/var/lib/ip*tables"  "iptables"    "${DATUM}" 1
-do_backup_fs "/var/lib/openldap-*" "openldap"    "${DATUM}" 1
-do_backup_fs "/var/lib/svn-repos"  "subversion"  "${DATUM}" 1
-do_backup_fs "/var/log"            "var-log"     "${DATUM}" 1
-do_backup_fs "/root"               "root"        "${DATUM}" 1
+do_backup_fs "/etc"                     "etc"                "${DATUM}" 1
+do_backup_fs "/var/bind"                "var-bind"           "${DATUM}" 1
+do_backup_fs "/var/lib/portage"         "var-lib-portage"    "${DATUM}" 1
+do_backup_fs "/var/lib/git"             "var-lib-git"        "${DATUM}" 1
+do_backup_fs "/var/lib/ip*tables"       "var-lib-iptables"   "${DATUM}" 1
+do_backup_fs "/var/lib/openldap-*"      "var-lib-openldap"   "${DATUM}" 1
+do_backup_fs "/var/lib/layman"          "var-lib-layman"     "${DATUM}" 1
+do_backup_fs "/var/lib/svn-repos"       "var-lib-subversion" "${DATUM}" 1
+do_backup_fs "/var/lib/svn-repos-priv"  "var-lib-svn-priv"   "${DATUM}" 1
+do_backup_fs "/var/log"                 "var-log"            "${DATUM}" 1
+do_backup_fs "/var/spool/cron/crontabs" "var-spool-crontabs" "${DATUM}" 1
+do_backup_fs "/root"                    "root"               "${DATUM}" 1
+
+BOOT_MOUNTED=
+if [ -d /boot/grub ] ; then
+    BOOT_MOUNTED=1
+fi
+
+if [ -z "${BOOT_MOUNTED}" ] ; then
+    mount /boot
+    if [ "$?" != "0" ] ; then
+        echo "Konnte /boot nicht mounten." >&2
+        exit 8
+    fi
+fi
+
+do_backup_fs "/boot" "boot" "${DATUM}" 1
+
+if [ -z "${BOOT_MOUNTED}" ] ; then
+    umount /boot
+fi
 
 for dir in /home/* ; do
 
@@ -113,5 +136,7 @@ df -k "${BACKUP_DIR}"
 echo
 echo "[`date`]: Vorbereitung Backup beendet."
 echo
+
+exit 0
 
 # vim: noai : ts=4 fenc=utf-8 filetype=sh : expandtab

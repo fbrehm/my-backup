@@ -33,7 +33,7 @@ do_backup_fs( ) {
     DO_COMPRESS=$4
 
     EXT=tar
-    TAR_CMD_OPTS="--create --preserve --sparse"
+    TAR_CMD_OPTS="--create --atime-preserve --preserve-permissions --preserve-order --sparse"
     SPLIT_CMD_OPTS="--bytes=${TAR_MAX_VOLUME_SIZE}"
     if [ -n "${DO_COMPRESS}" ] ; then
         EXT=tbz
@@ -99,6 +99,7 @@ do_backup_mysql( ) {
               --lock-tables \
               --quote-names \
               --add-drop-table \
+              --quick \
               ${V_PARAM} --all-databases | bzip2 -c >"${DUMPFILE_ABS}"
 
     echo "   [`date`]: fertig DUMP"
@@ -131,7 +132,12 @@ do_backup_ldap( ) {
 remove_all( ) {
     echo
     echo "Lösche alle lokalen Backups unter ${BACKUP_DIR} ..."
-    find ${BACKUP_DIR} -type f -exec rm -v {} \;
+    #find ${BACKUP_DIR} -type f -exec rm -v {} \;
+    for f in ${BACKUP_DIR}/* ; do
+        if [ -f "${f}" ] ; then
+            rm -v "${f}"
+        fi
+    done
 }
 
 #######################################################################
