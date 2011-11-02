@@ -3,9 +3,6 @@
 #
 # partielle lokale Änderungen können in einer 'config_local.yml' vorgenommen werden
 #
-# $Id: config.yml 512 2010-05-05 08:00:18Z fbrehm $
-# $URL: http://svn.technik.berlin.strato.de/svn-os/trunk/sd-mailversand/etc/config.yml $
-#
 ---
 # Produktionsstatus: Darf nur 'prod', 'test' oder 'dev' annehmen.
 #production_state: prod

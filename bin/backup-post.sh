@@ -27,4 +27,6 @@ echo
 echo "[`date`]: Backup beendet."
 echo
 
+exit 0
+
 # vim: noai : ts=4 fenc=utf-8 filetype=sh : expandtab

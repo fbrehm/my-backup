@@ -1,8 +1,5 @@
 package FrBr::Backup::App;
 
-# $Id$
-# $URL$
-
 =head1 NAME
 
 FrBr::Backup::App
@@ -35,12 +32,7 @@ with 'MooseX::Daemonize::WithPidFile';
 
 # Versionitis
 
-my $Revis = <<'ENDE';
-    $Revision$
-ENDE
-$Revis =~ s/^.*:\s*(\S+)\s*\$.*/$1/s;
-
-use version; our $VERSION = qv("0.9.1"); $VERSION .= " r" . $Revis;
+use version; our $VERSION = qv("0.9.2");
 
 #############################################################################################
 
