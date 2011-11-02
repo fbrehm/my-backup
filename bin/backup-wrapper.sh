@@ -19,6 +19,8 @@ export LC_MEASUREMENT=de_DE.utf8
 export LC_IDENTIFICATION=de_DE.utf8
 export LC_ALL=
 
+MY_HOSTNAME=$( hostname | perl -p -E '$_ =~ s/^(.)/uc($1)/e;' )
+
 LOG_NEW=${LOG}.new
 
 MY_UID=$( id -u )
@@ -30,12 +32,13 @@ fi
 BASEDIR=$(dirname $0)
 
 BACKUP_PRE_SCRIPT="${BASEDIR}/backup-pre.sh"
+BACKUP_SVN_SCRIPT="${BASEDIR}/backup-svn-full.sh"
 BACKUP_SCRIPT="${BASEDIR}/backup-per-ftp.pl"
 BACKUP_POST_SCRIPT="${BASEDIR}/backup-post.sh"
 FUNC_LIB="${BASEDIR}/backup-functions.rc"
 
 ALL_SCRIPTS_FOUND=1
-for S in ${BACKUP_PRE_SCRIPT} ${BACKUP_SCRIPT} ${BACKUP_POST_SCRIPT} ; do
+for S in ${BACKUP_PRE_SCRIPT} ${BACKUP_SVN_SCRIPT} ${BACKUP_SCRIPT} ${BACKUP_POST_SCRIPT} ; do
     if [ ! -x ${S} ] ; then
         echo "Script '${S}' fehlt." >&2
         ALL_SCRIPTS_FOUND=0
@@ -51,12 +54,20 @@ if [ "${ALL_SCRIPTS_FOUND}" == "0" ] ; then
 fi
 
 cp /dev/null ${LOG_NEW}
-for S in ${BACKUP_PRE_SCRIPT} ${BACKUP_SCRIPT} ${BACKUP_POST_SCRIPT} ; do
+echo "Backupergebnisse:" >>${LOG_NEW}
+echo "=================" >>${LOG_NEW}
+echo                     >>${LOG_NEW}
+for S in ${BACKUP_PRE_SCRIPT} ${BACKUP_SVN_SCRIPT} ${BACKUP_SCRIPT} ${BACKUP_POST_SCRIPT} ; do
     echo "${S} 2>&1 </dev/null | tee -a ${LOG_NEW}"
     ${S} 2>&1 </dev/null | tee -a ${LOG_NEW}
+    RES=$?
+    echo -e "Rückgabewert von '${S}': ${RES}\n" | tee -a ${LOG_NEW} 
+    if [ "${RES}" != "0" ] ; then
+        break
+    fi
 done
 
 cat ${LOG_NEW} >> ${LOG}
-echo -e "Backupergebnisse:\n" | nail -s "Backup Sarah [`date +'%Y-%m-%d'`]" -a "${LOG_NEW}" $RCPT
+echo "" | mailx -s "Backup ${MY_HOSTNAME} [`date +'%Y-%m-%d'`]" -q "${LOG_NEW}" $RCPT
 
 # vim: noai : ts=4 fenc=utf-8 filetype=sh : expandtab
