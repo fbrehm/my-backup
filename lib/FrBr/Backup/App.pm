@@ -32,7 +32,7 @@ with 'MooseX::Daemonize::WithPidFile';
 
 # Versionitis
 
-use version; our $VERSION = qv("0.9.2");
+use version; our $VERSION = qv("0.9.3");
 
 #############################################################################################
 
@@ -161,7 +161,7 @@ sub _build_backup_copies_daily {
 # Ändern der Eigenschaften einiger geerbter Attribute
 
 sub _build_version {
-    return $VERSION;
+    return ($VERSION . '');
 }
 
 sub _build_ftp_auto_login {
