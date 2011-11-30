@@ -51,6 +51,7 @@ for vdir in "${VHOSTS_DIR}"/* ; do
 done
 
 do_backup_fs "/etc"                     "etc"                "${DATUM}" 1
+do_backup_fs "/opt/fbrehm"              "opt-fbrehm"         "${DATUM}" 1
 do_backup_fs "/var/bind"                "var-bind"           "${DATUM}" 1
 do_backup_fs "/var/lib/portage"         "var-lib-portage"    "${DATUM}" 1
 do_backup_fs "/var/lib/git"             "var-lib-git"        "${DATUM}" 1
