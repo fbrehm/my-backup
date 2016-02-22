@@ -43,7 +43,8 @@ for vdir in "${VHOSTS_DIR}"/* ; do
     if [ -d "${vdir}" ] ; then
         d=`basename "${vdir}"`
         if [ "${d}" == "fotoalbum" ] ; then
-            do_backup_fs "${vdir}" www."${d}" "${DATUM}"
+            continue
+            #do_backup_fs "${vdir}" www."${d}" "${DATUM}"
         else
             do_backup_fs "${vdir}" www."${d}" "${DATUM}" 1
         fi
