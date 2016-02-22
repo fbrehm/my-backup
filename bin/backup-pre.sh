@@ -58,8 +58,8 @@ do_backup_fs "/var/lib/git"             "var-lib-git"        "${DATUM}" 1
 do_backup_fs "/var/lib/ip*tables"       "var-lib-iptables"   "${DATUM}" 1
 do_backup_fs "/var/lib/openldap-*"      "var-lib-openldap"   "${DATUM}" 1
 do_backup_fs "/var/lib/layman"          "var-lib-layman"     "${DATUM}" 1
-do_backup_fs "/var/lib/svn-repos"       "var-lib-subversion" "${DATUM}" 1
-do_backup_fs "/var/lib/svn-repos-priv"  "var-lib-svn-priv"   "${DATUM}" 1
+#do_backup_fs "/var/lib/svn-repos"       "var-lib-subversion" "${DATUM}" 1
+#do_backup_fs "/var/lib/svn-repos-priv"  "var-lib-svn-priv"   "${DATUM}" 1
 do_backup_fs "/var/log"                 "var-log"            "${DATUM}" 1
 do_backup_fs "/var/spool/cron/crontabs" "var-spool-crontabs" "${DATUM}" 1
 do_backup_fs "/root"                    "root"               "${DATUM}" 1

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+exit 0
+
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib64/subversion/bin
 export LANG="de_DE.UTF-8"
 export LC_CTYPE="de_DE.utf8"

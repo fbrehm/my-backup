@@ -33,7 +33,8 @@ BASEDIR=$(dirname $0)
 
 BACKUP_PRE_SCRIPT="${BASEDIR}/backup-pre.sh"
 BACKUP_SVN_SCRIPT="${BASEDIR}/backup-svn-full.sh"
-BACKUP_SCRIPT="${BASEDIR}/backup-per-ftp.pl"
+#BACKUP_SCRIPT="${BASEDIR}/backup-per-ftp.pl"
+BACKUP_SCRIPT="/root/work/ftp-backup/bin/backup-per-ftp"
 BACKUP_POST_SCRIPT="${BASEDIR}/backup-post.sh"
 FUNC_LIB="${BASEDIR}/backup-functions.rc"
 
