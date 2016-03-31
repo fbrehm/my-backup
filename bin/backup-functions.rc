@@ -32,6 +32,11 @@ do_backup_fs( ) {
     TYPE=$3
     DO_COMPRESS=$4
 
+    if [ ! -e "${DIR2BACKUP}" ] ; then
+        echo "   [`date`]: Directory '${DIR2BACKUP}' existiert nicht."
+        return
+    fi
+
     EXT=tar
     TAR_CMD_OPTS="--create --atime-preserve --preserve-permissions --sparse"
     SPLIT_CMD_OPTS="--bytes=${TAR_MAX_VOLUME_SIZE}"
