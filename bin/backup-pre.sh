@@ -36,20 +36,19 @@ cd /
 echo "Sichere Virtuelle Webhosts ..."
 if [ ! -d "${VHOSTS_DIR}" ] ; then
     echo "Verzeichnis '${VHOSTS_DIR}' existiert nicht." >&2
-    exit 7
-fi
-
-for vdir in "${VHOSTS_DIR}"/* ; do
-    if [ -d "${vdir}" ] ; then
-        d=`basename "${vdir}"`
-        if [ "${d}" == "fotoalbum" ] ; then
-            continue
-            #do_backup_fs "${vdir}" www."${d}" "${DATUM}"
-        else
-            do_backup_fs "${vdir}" www."${d}" "${DATUM}" 1
+else
+    for vdir in "${VHOSTS_DIR}"/* ; do
+        if [ -d "${vdir}" ] ; then
+            d=`basename "${vdir}"`
+            if [ "${d}" == "fotoalbum" ] ; then
+                continue
+                #do_backup_fs "${vdir}" www."${d}" "${DATUM}"
+            else
+                do_backup_fs "${vdir}" www."${d}" "${DATUM}" 1
+            fi
         fi
-    fi
-done
+    done
+fi
 
 do_backup_fs "/etc"                     "etc"                "${DATUM}" 1
 do_backup_fs "/opt/fbrehm"              "opt-fbrehm"         "${DATUM}" 1
@@ -59,29 +58,35 @@ do_backup_fs "/var/lib/git"             "var-lib-git"        "${DATUM}" 1
 do_backup_fs "/var/lib/ip*tables"       "var-lib-iptables"   "${DATUM}" 1
 do_backup_fs "/var/lib/openldap-*"      "var-lib-openldap"   "${DATUM}" 1
 do_backup_fs "/var/lib/layman"          "var-lib-layman"     "${DATUM}" 1
+do_backup_fs "/var/lib/salt"            "var-lib-salt"       "${DATUM}" 1
 #do_backup_fs "/var/lib/svn-repos"       "var-lib-subversion" "${DATUM}" 1
 #do_backup_fs "/var/lib/svn-repos-priv"  "var-lib-svn-priv"   "${DATUM}" 1
 do_backup_fs "/var/log"                 "var-log"            "${DATUM}" 1
 do_backup_fs "/var/spool/cron/crontabs" "var-spool-crontabs" "${DATUM}" 1
 do_backup_fs "/root"                    "root"               "${DATUM}" 1
 
-BOOT_MOUNTED=
-if [ -d /boot/grub ] ; then
-    BOOT_MOUNTED=1
-fi
+# Backup of /boot on Gentoo Boxes
+if [ -f /etc/gentoo-release ] ; then
 
-if [ -z "${BOOT_MOUNTED}" ] ; then
-    mount /boot
-    if [ "$?" != "0" ] ; then
-        echo "Konnte /boot nicht mounten." >&2
-        exit 8
+    BOOT_MOUNTED=
+    if [ -d /boot/grub ] ; then
+        BOOT_MOUNTED=1
     fi
-fi
 
-do_backup_fs "/boot" "boot" "${DATUM}" 1
+    if [ -z "${BOOT_MOUNTED}" ] ; then
+        mount /boot
+        if [ "$?" != "0" ] ; then
+            echo "Konnte /boot nicht mounten." >&2
+            exit 8
+        fi
+    fi
 
-if [ -z "${BOOT_MOUNTED}" ] ; then
-    umount /boot
+    do_backup_fs "/boot" "boot" "${DATUM}" 1
+
+    if [ -z "${BOOT_MOUNTED}" ] ; then
+        umount /boot
+    fi
+
 fi
 
 for dir in /home/* ; do

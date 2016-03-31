@@ -84,6 +84,14 @@ do_backup_mysql( ) {
     DUMPFILE="mysql.dump.${TYPE}.bz2"
     DUMPFILE_ABS="${BACKUP_DIR}"/"${DUMPFILE}"
 
+    if ps -ef | grep mysqld | grep -v grep >/dev/null ; then
+        :
+    else
+        echo
+        echo "   [`date`]: MySQL Server laeuft nicht."
+        return
+    fi
+
     V_PARAM=""
     if [ -n "${VERBOSE}" -a "${VERBOSE}" != "0" ] ; then
         V_PARAM="--verbose"
@@ -118,6 +126,14 @@ do_backup_ldap( ) {
     TYPE="$1"
     DUMPFILE=ldap.dump.${TYPE}.gz
     DUMPFILE_ABS=${BACKUP_DIR}/${DUMPFILE}
+
+    if ps -ef | grep slapd | grep -v grep >/dev/null ; then
+        :
+    else
+        echo
+        echo "   [`date`]: OpenLDAP Server laeuft nicht."
+        return
+    fi
 
     V_PARAM=""
     if [ -n "${VERBOSE}" -a "${VERBOSE}" != "0" ] ; then
