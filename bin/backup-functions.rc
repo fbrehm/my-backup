@@ -32,10 +32,12 @@ do_backup_fs( ) {
     TYPE=$3
     DO_COMPRESS=$4
 
-    if [ ! -e "${DIR2BACKUP}" ] ; then
-        echo "   [`date`]: Directory '${DIR2BACKUP}' existiert nicht."
-        return
-    fi
+    for dir in ${DIR2BACKUP} ; do
+        if [ ! -e "${dir}" ] ; then
+            echo "   [`date`]: Directory '${dir}' existiert nicht."
+            return
+        fi
+    done
 
     EXT=tar
     TAR_CMD_OPTS="--create --atime-preserve --preserve-permissions --sparse"
@@ -143,7 +145,8 @@ do_backup_ldap( ) {
     echo
     echo "Sichere LDAP-Datenbank ..."
     echo "   [`date`]: beginne DUMP"
-    ldapsearch -D "${LDAP_DN}" -x ${V_PARAM} -h localhost -z 10000 -w "${LDAP_PW}" -b "${LDAP_SEARCH_BASE}" | gzip -9 >${DUMPFILE_ABS}
+    # ldapsearch -D "${LDAP_DN}" -x ${V_PARAM} -h localhost -z 10000 -w "${LDAP_PW}" -b "${LDAP_SEARCH_BASE}" | gzip -9 >${DUMPFILE_ABS}
+    slapcat | gzip -9 >${DUMPFILE_ABS}
     echo "   [`date`]: fertig DUMP"
 
 }

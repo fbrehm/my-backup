@@ -17,6 +17,8 @@ if [ ! -f "${FUNC_LIB}" ] ; then
 fi
 . "${FUNC_LIB}"
 
+exit 0
+
 echo
 echo "[`date`]: Werfe Backup-Sets weg."
 echo
